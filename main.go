@@ -35,10 +35,17 @@ func health(w http.ResponseWriter, r *http.Request) {
 
 func test(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		fmt.Printf("ERROR: %s\n", err.Error())
-		return
+	var ip string
+	xForwardedFor := r.Header.Get("X-Forwarded-For")
+	if len(xForwardedFor) > 0 {
+		ip = xForwardedFor
+	} else {
+		ipHost, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			fmt.Printf("ERROR: %s\n", err.Error())
+			return
+		}
+		ip = ipHost
 	}
 	log.Printf("IP -> %v\n", ip)
 	log.Printf("PATH -> %s\n", r.URL.Path)
@@ -93,7 +100,7 @@ func quantityDynamicPath(num int) string {
 func main() {
 	port := os.Getenv("PORT")
 	router := mux.NewRouter()
-	router.Use(middlewares.AllowListMiddleware)
+	router.Use(middlewares.ParseXForwardFor, middlewares.AllowListMiddleware)
 	router.HandleFunc("/health", health)
 	router.HandleFunc("/{first}", test)
 	router.HandleFunc("/{first}/{second}", test)
