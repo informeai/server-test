@@ -93,7 +93,7 @@ func quantityDynamicPath(num int) string {
 func main() {
 	port := os.Getenv("PORT")
 	router := mux.NewRouter()
-  router.Use(middlewares.DenyListMiddleware)
+	router.Use(middlewares.AllowListMiddleware)
 	router.HandleFunc("/health", health)
 	router.HandleFunc("/{first}", test)
 	router.HandleFunc("/{first}/{second}", test)
